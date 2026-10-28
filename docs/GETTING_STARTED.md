@@ -10,19 +10,19 @@ Download the completed run's `racing-dominion-release-apk` artifact, extract it,
 
 ## Local command-line builds
 
-Install JDK 17, Android SDK platform/build-tools 34, NDK 26.1.10909125, CMake 3.22.1, and Android platform-tools. Configure `ANDROID_HOME` or `local.properties` with your SDK location. CI downloads the Gradle 8.2 wrapper JAR; local builds also require `gradle/wrapper/gradle-wrapper.jar`.
+Install JDK 17, Android SDK platform/build-tools 34, NDK 26.1.10909125, CMake 3.22.1, and Android platform-tools. Configure `ANDROID_HOME` or `local.properties` with your SDK location. Install Gradle 8.2 locally. CI installs the pinned Gradle distribution directly; the repository does not include the Gradle wrapper JAR.
 
 From the repository root in PowerShell:
 
 ```powershell
-.\gradlew.bat assembleDebug
+gradle assembleDebug
 ```
 
 With USB debugging enabled and your phone connected:
 
 ```powershell
 adb devices
-.\gradlew.bat installDebug
+gradle installDebug
 ```
 
 Launch Racing Dominion on your phone after installation. The application ID is `co.za.chefu.racingdominion`.
@@ -33,13 +33,19 @@ The [README](../README.md#customize) maps the visual and gameplay systems to the
 
 The default game uses the authored Crownline Circuit and procedural RD-01 car. Legacy sample model assets are not used for the player's car.
 
-## Device checks after visual changes
+## Device checks after changes
 
-- Start a race and confirm the menu disappears.
-- Check the timer, speed, lap display, and control zones on your screen size.
-- Drive the four course gates in order; the start line should count a lap only after the other gates.
-- Complete three laps and tap the results screen to restart.
-- Background and reopen the app, checking rendering and touch input.
+- Check the orange/ice-blue/plum UI, illuminated gantries, chevron murals, Foundry Spire, and the RD-01's livery, round wheels, headlights, and brake lights.
+- Start a run: confirm 3, 2, 1, GO; the race timer must exclude the countdown.
+- Hold gas with the right thumb while steering with the left. Release each finger separately; the other control should remain active. Move the pedal finger to brake.
+- Check chase-camera response at speed and brief tire smoke during hard braking/turning.
+- Cross four gates forward and in order, checking sector times/medals. A reverse or skipped gate must not award a sector. Barrier contact should slow and realign the car, rather than allow an infield shortcut.
+- Complete three laps. Check all twelve medals, points out of 36, Dominion rank, best lap, and personal-best banner. Gold requires 30 points, Silver 20, Bronze 10.
+- Retry and confirm medals/time reset. Relaunch the app and confirm the saved best time/rank and sound setting remain.
+- Check engine pitch, tire/collision effects, countdown beeps, sector cue, and finish jingle. Toggle mute; background the app or interrupt it with other audio to check sound stops.
+- Pause during countdown and racing. Background and reopen the app: time and controls must stay paused until resumed. Check small-phone and tablet layouts, especially the HUD, real pause/sound buttons, and results panel.
+
+These device checks are still required: host tests do not exercise Android GPU output, touch delivery, SoundPool, or audio focus on a real phone. If Android destroys the GL context while backgrounded, the current run resets to the menu; saved bests/settings remain.
 
 ## Logs
 

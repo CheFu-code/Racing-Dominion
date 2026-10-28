@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="dominion_lime">#D4FF55</color>
-    <color name="dominion_graphite">#101824</color>
-    <color name="dominion_midnight">#080E18</color>
+    <color name="dominion_orange">#FF6B35</color>
+    <color name="dominion_ice">#8DE8FF</color>
+    <color name="dominion_plum">#24112F</color>
+    <color name="dominion_midnight">#180A22</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
 </resources>

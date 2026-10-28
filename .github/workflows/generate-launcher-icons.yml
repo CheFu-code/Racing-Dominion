@@ -15,7 +15,7 @@ jobs:
           python-version: '3.11'
       - name: Install icon renderer
         run: pip install Pillow==12.3.0
-      - name: Generate Dominion crown icons
+      - name: Generate Dominion RD monogram icons
         run: python tools/generate_launcher_icons.py
       - name: Commit launcher icons
         run: |

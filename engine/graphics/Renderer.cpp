@@ -45,6 +45,9 @@ uniform vec3 uObjectColor;
 uniform vec3 uAmbientColor;
 uniform sampler2D uTexture;
 uniform int uUseTexture;
+uniform float uEmissive;
+uniform float uOpacity;
+uniform int uSoftParticle;
 
 out vec4 FragColor;
 
@@ -66,14 +69,18 @@ void main() {
     float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32.0);
     vec3 specular = 0.5 * spec * vec3(1.0);
 
-    vec3 result = ambient + diffuse + specular;
-    FragColor = vec4(result, 1.0);
+    vec3 result = mix(ambient + diffuse + specular, baseColor * 1.2, uEmissive);
+    float fog = smoothstep(60.0, 240.0, length(uViewPos - vFragPos));
+    result = mix(result, vec3(0.14, 0.065, 0.185), fog * 0.85);
+    float alpha = uOpacity;
+    if (uSoftParticle == 1) alpha *= 1.0 - smoothstep(0.08, 0.5, length(vTexCoord - vec2(0.5)));
+    FragColor = vec4(result, alpha);
 }
 )";
 
 Renderer::Renderer()
     : lightPosition(0, 50, 50),
-      ambientR(0.3f), ambientG(0.3f), ambientB(0.3f),
+      ambientR(0.32f), ambientG(0.24f), ambientB(0.40f),
       screenWidth(0), screenHeight(0) {}
 
 Renderer::~Renderer() {
@@ -120,6 +127,9 @@ void Renderer::beginFrame() {
     shader.setVec3("uViewPos", camPos.x, camPos.y, camPos.z);
     shader.setVec3("uAmbientColor", ambientR, ambientG, ambientB);
     shader.setInt("uUseTexture", 0);
+    shader.setFloat("uEmissive", 0);
+    shader.setFloat("uOpacity", 1);
+    shader.setInt("uSoftParticle", 0);
 }
 
 void Renderer::renderModel(Model& model, const Vector3& color) {

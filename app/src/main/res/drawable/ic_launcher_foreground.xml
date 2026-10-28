@@ -2,11 +2,11 @@
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp" android:height="108dp"
     android:viewportWidth="108" android:viewportHeight="108">
-    <!-- Dominion crown above a converging racing straight. -->
-    <path android:fillColor="#D4FF55"
-        android:pathData="M32,39 L43,48 L54,32 L65,48 L76,39 L70,61 L38,61 Z"/>
-    <path android:fillColor="#F3F6FA"
-        android:pathData="M43,66 L50,66 L46,77 L36,77 Z M58,66 L65,66 L72,77 L62,77 Z"/>
-    <path android:fillColor="#D4FF55"
-        android:pathData="M53,66 L55,66 L56,71 L52,71 Z M52,74 L56,74 L57,78 L51,78 Z"/>
+    <!-- Authored RD monogram, with angular counters and split speed accents. -->
+    <path android:fillColor="#FF6B35" android:fillType="evenOdd"
+        android:pathData="M29,35 L47,35 L55,43 L55,52 L49,58 L57,72 L46,72 L39,60 L38,60 L38,72 L29,72 Z M38,43 L38,52 L44,52 L47,49 L47,46 L44,43 Z"/>
+    <path android:fillColor="#8DE8FF" android:fillType="evenOdd"
+        android:pathData="M59,35 L69,35 L80,46 L80,61 L69,72 L59,72 Z M67,44 L67,63 L72,58 L72,49 Z"/>
+    <path android:fillColor="#FF6B35"
+        android:pathData="M37,76 L45,76 L42,79 L34,79 Z M49,76 L72,76 L69,79 L46,79 Z"/>
 </vector>

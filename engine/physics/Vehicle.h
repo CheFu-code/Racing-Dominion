@@ -21,6 +21,14 @@ public:
     float getSteeringAngle() const { return steeringAngle; }
     void setHeading(float radians) { heading = radians; }
     float getHeading() const { return heading; }
+    void hitBarrier(const Vector3& safePosition, float roadHeading) {
+        position = safePosition;
+        heading = roadHeading;
+        float safeSpeed = getSpeed() * 0.2f;
+        velocity = Vector3(sinf(heading) * safeSpeed, 0, cosf(heading) * safeSpeed);
+        speed = getSpeed();
+        acceleration = Vector3();
+    }
 
 private:
     Vector3 position;

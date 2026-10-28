@@ -35,6 +35,8 @@ public:
     bool checkCollision(const Vector3& position, float radius) const;
     bool isOnTrack(const Vector3& position) const;
     int getCheckpointIndex(const Vector3& position) const;
+    int crossedCheckpoint(const Vector3& from, const Vector3& to) const;
+    float headingAt(const Vector3& position) const;
 
     const std::vector<TrackSegment>& getSegments() const { return segments; }
     Vector3 getStartPosition() const;
@@ -48,6 +50,9 @@ private:
     Mesh* checkpointMesh;
     Mesh* groundMesh;
     Mesh* skylineMesh;
+    Mesh* lightsMesh;
+    Mesh* muralMesh;
+    Mesh* structureMesh;
     int totalLaps;
 
     void createTrackGeometry();

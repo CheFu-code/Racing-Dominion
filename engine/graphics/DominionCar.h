@@ -12,11 +12,11 @@ public:
     void initialize();
     void setPosition(const Vector3& position);
     void setRotation(float angle, const Vector3& axis);
-    void draw(const class Shader& shader) const;
+    void draw(const class Shader& shader, bool braking = false) const;
     void destroy();
 
 private:
-    std::array<Model, 4> parts;
+    std::array<Model, 5> parts;
 };
 
 } // namespace RacingEngine

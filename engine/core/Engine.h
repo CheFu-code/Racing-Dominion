@@ -5,98 +5,48 @@
 #include <EGL/egl.h>
 #include <android/asset_manager.h>
 #include "Renderer.h"
-#include "Camera.h"
 #include "Track.h"
 #include "Vehicle.h"
-#include "Mesh.h"
 #include "DominionCar.h"
+#include "CircuitChallenge.h"
+#include "SmokeTrail.h"
 
 namespace RacingEngine {
-
-enum class GameState {
-    MENU,
-    LOADING,
-    RACING,
-    PAUSED,
-    FINISHED
-};
-
-struct InputState {
-    bool touching;
-    float touchX, touchY;
-    float touchStartX, touchStartY;
-    float steeringInput;   // -1 to 1
-    float accelerationInput; // 0 to 1
-    float brakeInput;      // 0 to 1
-    bool touchLeft;        // left side of screen for steering
-    bool touchRight;       // right side of screen for steering
-};
-
-struct RaceState {
-    int currentLap;
-    int totalLaps;
-    int lastCheckpoint;
-    float raceTime;
-    float bestLapTime;
-    float currentLapTime;
-    bool finished;
-};
+// Numeric values are shared with RaceSnapshot.java.
+enum class GameState { MENU = 0, LOADING = 1, RACING = 2, PAUSED = 3, FINISHED = 4, COUNTDOWN = 5 };
 
 class Engine {
 public:
     Engine();
     ~Engine();
-
-    bool initialize(AAssetManager* assetManager);
+    bool initialize(AAssetManager* assets);
     void resize(int width, int height);
-    void update(float deltaTime);
+    void update(float dt);
     void render();
     void shutdown();
-
-    // Input handling
-    void onTouchDown(float x, float y);
-    void onTouchMove(float x, float y);
-    void onTouchUp(float x, float y);
-
-    // Game state
-    GameState getGameState() const { return gameState; }
-    void startRace();
-    void pauseGame();
-    void resumeGame();
-
-    // For HUD display
-    float getSpeed() const { return vehicle.getSpeed(); }
-    int getCurrentLap() const { return raceState.currentLap; }
-    int getTotalLaps() const { return raceState.totalLaps; }
-    float getRaceTime() const { return raceState.raceTime; }
-    bool isRaceFinished() const { return raceState.finished; }
+    void setControls(float steer, float throttle, float brake);
+    void action(int action); // 0 activate/resume, 1 pause toggle, 2 background pause
+    void writeTelemetry(float* values) const; // 34 entries; see RaceSnapshot.
 
 private:
-    int screenWidth;
-    int screenHeight;
-    AAssetManager* assetManager;
-
-    bool isInitialized;
-    float gameTime;
-
+    int screenWidth = 0, screenHeight = 0;
+    bool initialized = false;
+    float gameTime = 0, countdown = 3, collisionCooldown = 0, skid = 0, finishHold = 0;
+    float steering = 0, throttle = 0, brake = 0;
+    int collisions = 0;
+    GameState state = GameState::MENU, beforePause = GameState::RACING;
     Renderer renderer;
     Vehicle vehicle;
     Track track;
-    InputState inputState;
-    RaceState raceState;
-    GameState gameState;
+    DominionCar car;
+    CircuitChallenge challenge;
+    SmokeTrail smoke;
+    Mesh* smokeQuad = nullptr;
 
-    // Car model for rendering
-    DominionCar carModel;
-
-    void updateMenu(float deltaTime);
-    void updateRacing(float deltaTime);
-    void handleInput(float deltaTime);
-    void updateCamera();
-    void checkCheckpoints();
-    void resetRace();
+    void startRace();
+    void updateCamera(float dt, bool snap = false);
+    void updateRacing(float dt);
+    void drawSmoke();
 };
-
 } // namespace RacingEngine
-
-#endif // ENGINE_H
+#endif

@@ -18,11 +18,11 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Check Crownline geometry and vehicle handling
+    - name: Check race rules, geometry, and vehicle handling
       run: |
-        g++ -std=c++17 -Itests/native/stubs -Iengine/core -Iengine/graphics -Iengine/math -Iengine/physics \
-          tests/native/geometry_test.cpp engine/core/Track.cpp engine/graphics/DominionCar.cpp \
-          engine/physics/Vehicle.cpp -o "$RUNNER_TEMP/racing-dominion-check"
+        g++ -std=c++17 -Itests/native/stubs -Iengine/core -Iengine/graphics -Iengine/math -Iengine/physics -Iengine/assets \
+          tests/native/geometry_test.cpp engine/core/Track.cpp engine/core/Engine.cpp engine/graphics/DominionCar.cpp \
+          engine/graphics/Camera.cpp engine/physics/Vehicle.cpp -o "$RUNNER_TEMP/racing-dominion-check"
         "$RUNNER_TEMP/racing-dominion-check"
     
     - name: Set up JDK 17
@@ -40,6 +40,19 @@ jobs:
 
     - name: Check Gradle installation
       run: gradle --version
+
+    - name: Check multitouch controls
+      run: |
+        mkdir -p "$RUNNER_TEMP/dominion-java-check"
+        javac -d "$RUNNER_TEMP/dominion-java-check" app/src/main/java/com/racing/engine/TouchControls.java \
+          app/src/main/java/com/racing/engine/RaceSnapshot.java tests/java/TouchControlsTest.java
+        java -cp "$RUNNER_TEMP/dominion-java-check" co.za.chefu.racingdominion.TouchControlsTest
+
+    - name: Install required Android components
+      run: |
+        SDK_ROOT="${ANDROID_SDK_ROOT:-$ANDROID_HOME}"
+        echo "ANDROID_SDK_ROOT=$SDK_ROOT" >> "$GITHUB_ENV"
+        "$SDK_ROOT/cmdline-tools/latest/bin/sdkmanager" --install "platforms;android-34" "build-tools;34.0.0" "ndk;26.1.10909125" "cmake;3.22.1"
     
     - name: Prepare release signing key
       if: github.event_name != 'pull_request'

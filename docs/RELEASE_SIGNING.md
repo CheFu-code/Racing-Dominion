@@ -39,6 +39,6 @@ Push to `main` or `develop`, or select **Actions > Racing Dominion Release APK >
 
 A previously installed debug APK normally has a different signing certificate. Android cannot install this release over that debug build; uninstall the debug build first if Android reports a signature conflict. Uninstalling removes that app's local data.
 
-Local debug development still uses `assembleDebug` / `installDebug`. For a signed local release, set `RELEASE_STORE_FILE`, `RELEASE_STORE_PASSWORD`, `RELEASE_KEY_ALIAS`, and `RELEASE_KEY_PASSWORD` in your shell and run `./gradlew assembleRelease`. Without `RELEASE_STORE_FILE`, local release builds are unsigned.
+Local debug development still uses `assembleDebug` / `installDebug`. For a signed local release, set `RELEASE_STORE_FILE`, `RELEASE_STORE_PASSWORD`, `RELEASE_KEY_ALIAS`, and `RELEASE_KEY_PASSWORD` in your shell and run `gradle assembleRelease` using Gradle 8.2. Without `RELEASE_STORE_FILE`, local release builds are unsigned.
 
 See the official [Android app signing documentation](https://developer.android.com/studio/publish/app-signing) for signing identities and APK update requirements.

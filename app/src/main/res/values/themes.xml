@@ -2,9 +2,9 @@
 <resources>
     <!-- Base application theme -->
     <style name="Theme.RacingDominion" parent="Theme.AppCompat.NoActionBar">
-        <item name="colorPrimary">@color/dominion_graphite</item>
+        <item name="colorPrimary">@color/dominion_plum</item>
         <item name="colorPrimaryDark">@color/dominion_midnight</item>
-        <item name="colorAccent">@color/dominion_lime</item>
+        <item name="colorAccent">@color/dominion_orange</item>
         <item name="android:windowBackground">@color/dominion_midnight</item>
     </style>
 </resources>

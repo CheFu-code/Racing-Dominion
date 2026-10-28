@@ -1,302 +1,182 @@
 #include "Engine.h"
 #include "AssetLoader.h"
-#include <android/log.h>
+#include "ProceduralGeometry.h"
 #include <cmath>
-
-#define LOG_TAG "RacingEngine"
-#define LOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
-#define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
+#include <algorithm>
 
 namespace RacingEngine {
+Engine::Engine() = default;
+Engine::~Engine() { shutdown(); }
 
-Engine::Engine()
-    : screenWidth(0), screenHeight(0), assetManager(nullptr),
-      isInitialized(false), gameTime(0.0f),
-      gameState(GameState::MENU) {
-
-    inputState = {};
-    raceState = {};
-    raceState.totalLaps = 3;
-}
-
-Engine::~Engine() {
-    shutdown();
-}
-
-bool Engine::initialize(AAssetManager* assetMgr) {
-    LOGI("Initializing Racing Engine...");
-
-    assetManager = assetMgr;
-    AssetLoader::initialize(assetMgr);
-
-    if (!renderer.initialize()) {
-        LOGE("Renderer initialization failed");
-        return false;
-    }
-
-    // Generate default track
+bool Engine::initialize(AAssetManager* assets) {
+    AssetLoader::initialize(assets);
+    if (!renderer.initialize()) return false;
     track.generateDefaultTrack();
-
-    carModel.initialize();
-
-    // Set initial car position at track start
+    car.initialize();
+    Geometry quad;
+    quad.quad(Vector3(-0.5f, -0.5f, 0), Vector3(0.5f, -0.5f, 0),
+              Vector3(0.5f, 0.5f, 0), Vector3(-0.5f, 0.5f, 0));
+    smokeQuad = quad.upload();
+    // Course-length-based targets are the same in the HUD and scoring rules.
+    const auto& segments = track.getSegments();
+    for (int sector = 0; sector < 4; ++sector) {
+        float length = 0;
+        for (size_t i = sector * segments.size() / 4; i < (sector + 1) * segments.size() / 4; ++i)
+            length += segments[i].length;
+        challenge.goldTargets[sector] = length / 20.f + 2.f + (sector == 0 ? 1.5f : 0.f);
+    }
     vehicle.setPosition(track.getStartPosition());
-    carModel.setPosition(track.getStartPosition());
-    float startRot = track.getStartRotation();
-    vehicle.setHeading(startRot);
-    carModel.setRotation(startRot, Vector3(0, 1, 0));
-
-    // Set up sky/clear color
-    renderer.setClearColor(0.055f, 0.085f, 0.14f, 1.0f);
-
-    gameState = GameState::MENU;
-    isInitialized = true;
-    LOGI("Engine initialized successfully");
-
+    vehicle.setHeading(track.getStartRotation());
+    car.setPosition(vehicle.getPosition());
+    car.setRotation(vehicle.getHeading(), Vector3(0, 1, 0));
+    renderer.setClearColor(0.14f, 0.065f, 0.185f, 1);
+    initialized = true;
     return true;
 }
 
 void Engine::resize(int width, int height) {
-    screenWidth = width;
-    screenHeight = height;
+    screenWidth = width; screenHeight = height;
     renderer.resize(width, height);
-    LOGI("Screen resized to: %dx%d", width, height);
 }
 
-void Engine::update(float deltaTime) {
-    if (!isInitialized) return;
-
-    // Clamp delta time to avoid physics explosion
-    if (deltaTime > 0.05f) deltaTime = 0.05f;
-
-    gameTime += deltaTime;
-
-    switch (gameState) {
-        case GameState::MENU:
-            updateMenu(deltaTime);
-            break;
-        case GameState::RACING:
-            updateRacing(deltaTime);
-            break;
-        case GameState::PAUSED:
-            // No updates when paused
-            break;
-        case GameState::FINISHED:
-            // Allow camera movement but not vehicle
-            updateCamera();
-            break;
-        default:
-            break;
-    }
+void Engine::setControls(float steer, float gas, float stopping) {
+    steering = std::isfinite(steer) ? std::clamp(steer, -1.f, 1.f) : 0;
+    throttle = std::isfinite(gas) ? std::clamp(gas, 0.f, 1.f) : 0;
+    brake = std::isfinite(stopping) ? std::clamp(stopping, 0.f, 1.f) : 0;
 }
 
-void Engine::updateMenu(float deltaTime) {
-    // Slowly rotate camera around track for menu view
-    float angle = gameTime * 0.3f;
-    float camX = cosf(angle) * 120.0f;
-    float camZ = sinf(angle) * 120.0f;
-    renderer.getCamera().lookAt(
-        Vector3(camX, 40, camZ),
-        Vector3(0, 0, 0),
-        Vector3(0, 1, 0));
-}
-
-void Engine::updateRacing(float deltaTime) {
-    handleInput(deltaTime);
-    vehicle.update(deltaTime);
-
-    raceState.raceTime += deltaTime;
-    raceState.currentLapTime += deltaTime;
-
-    Vector3 pos = vehicle.getPosition();
-
-    // Boundary check - keep car on/near track
-    if (pos.y < -1.0f) {
-        vehicle.setPosition(Vector3(pos.x, 0.5f, pos.z));
-    }
-
-    // Check collision with barriers
-    if (track.checkCollision(pos, 1.5f)) {
-        // Push back - simple collision response
-        Vector3 vel = vehicle.getVelocity();
-        vehicle.applyBrake(1.0f);
-    }
-
-    // Check checkpoints
-    checkCheckpoints();
-
-    // Update car model position
-    carModel.setPosition(vehicle.getPosition());
-
-    // Update car rotation based on steering
-    Vector3 vel = vehicle.getVelocity();
-    float speed = vehicle.getSpeed();
-    if (speed > 0.5f) {
-        float angle = atan2f(vel.x, vel.z);
-        carModel.setRotation(angle, Vector3(0, 1, 0));
-    }
-
-    updateCamera();
-}
-
-void Engine::handleInput(float deltaTime) {
-    if (!inputState.touching) {
-        inputState.accelerationInput = 0;
-        inputState.brakeInput = 0;
-        inputState.steeringInput *= 0.9f; // Decay steering
-        vehicle.applySteering(inputState.steeringInput * 0.8f, deltaTime);
-        return;
-    }
-
-    // Touch-based controls:
-    // Left half of screen = steering left/right (based on Y position)
-    // Right half of screen = accelerate (upper) or brake (lower)
-    float normalizedX = inputState.touchX / (float)(screenWidth > 0 ? screenWidth : 1);
-    float normalizedY = inputState.touchY / (float)(screenHeight > 0 ? screenHeight : 1);
-
-    if (normalizedX < 0.5f) {
-        // Left side - steering based on vertical position
-        // Top of left side = steer left, bottom = steer right
-        inputState.steeringInput = (0.5f - normalizedY) * 2.0f;
-        inputState.steeringInput = fmaxf(-1.0f, fminf(1.0f, inputState.steeringInput));
-    } else {
-        // Right side - accelerate (top) or brake (bottom)
-        if (normalizedY < 0.5f) {
-            inputState.accelerationInput = (0.5f - normalizedY) * 2.0f;
-            inputState.brakeInput = 0;
-        } else {
-            inputState.accelerationInput = 0;
-            inputState.brakeInput = (normalizedY - 0.5f) * 2.0f;
-        }
-    }
-
-    vehicle.applySteering(inputState.steeringInput * 0.8f, deltaTime);
-
-    if (inputState.accelerationInput > 0.01f) {
-        vehicle.applyAcceleration(inputState.accelerationInput);
-    }
-    if (inputState.brakeInput > 0.01f) {
-        vehicle.applyBrake(inputState.brakeInput);
-    }
-}
-
-void Engine::updateCamera() {
-    Vector3 carPos = vehicle.getPosition();
-    Vector3 carVel = vehicle.getVelocity();
-    float speed = vehicle.getSpeed();
-
-    Vector3 forward;
-    if (speed > 0.5f) {
-        forward = carVel.normalized();
-    } else {
-        forward = Vector3(sinf(vehicle.getHeading()), 0, cosf(vehicle.getHeading()));
-    }
-
-    renderer.getCamera().followTarget(carPos, forward, 12.0f, 6.0f, 0.05f);
-}
-
-void Engine::checkCheckpoints() {
-    Vector3 pos = vehicle.getPosition();
-    int cpIdx = track.getCheckpointIndex(pos);
-
-    if (cpIdx >= 0 && cpIdx == (raceState.lastCheckpoint + 1) % 4) {
-        if (cpIdx == 0) {
-            // Completed a lap
-            raceState.currentLap++;
-            if (raceState.currentLapTime < raceState.bestLapTime || raceState.bestLapTime == 0) {
-                raceState.bestLapTime = raceState.currentLapTime;
-            }
-            raceState.currentLapTime = 0;
-
-            if (raceState.currentLap >= raceState.totalLaps) {
-                raceState.finished = true;
-                gameState = GameState::FINISHED;
-                LOGI("Race finished! Total time: %.2f", raceState.raceTime);
-            }
-        }
-        raceState.lastCheckpoint = cpIdx;
-    }
-}
-
-void Engine::render() {
-    if (!isInitialized) return;
-
-    renderer.beginFrame();
-
-    // Draw track
-    track.draw(renderer.getShader());
-
-    // Draw car
-    if (gameState != GameState::MENU) {
-        carModel.draw(renderer.getShader());
-    }
-
-    renderer.endFrame();
-}
-
-void Engine::shutdown() {
-    if (isInitialized) {
-        LOGI("Shutting down engine...");
-        track.destroy();
-        carModel.destroy();
-        renderer.shutdown();
-        isInitialized = false;
-    }
-}
-
-void Engine::onTouchDown(float x, float y) {
-    inputState.touching = true;
-    inputState.touchX = x;
-    inputState.touchY = y;
-    inputState.touchStartX = x;
-    inputState.touchStartY = y;
-
-    if (gameState == GameState::MENU) {
+void Engine::action(int code) {
+    if (code == 0 && (state == GameState::MENU || (state == GameState::FINISHED && finishHold >= 0.75f))) {
         startRace();
-    } else if (gameState == GameState::FINISHED) {
-        resetRace();
-        startRace();
+    } else if (state == GameState::PAUSED && code != 2) {
+        state = beforePause;
+    } else if ((code == 1 || code == 2) && (state == GameState::RACING || state == GameState::COUNTDOWN)) {
+        beforePause = state;
+        state = GameState::PAUSED;
+        setControls(0, 0, 0);
     }
-}
-
-void Engine::onTouchMove(float x, float y) {
-    inputState.touchX = x;
-    inputState.touchY = y;
-}
-
-void Engine::onTouchUp(float x, float y) {
-    inputState.touching = false;
-    inputState.accelerationInput = 0;
-    inputState.brakeInput = 0;
 }
 
 void Engine::startRace() {
-    LOGI("Starting race...");
-    resetRace();
-    gameState = GameState::RACING;
-}
-
-void Engine::pauseGame() {
-    if (gameState == GameState::RACING) {
-        gameState = GameState::PAUSED;
-    }
-}
-
-void Engine::resumeGame() {
-    if (gameState == GameState::PAUSED) {
-        gameState = GameState::RACING;
-    }
-}
-
-void Engine::resetRace() {
+    challenge.reset();
+    smoke.reset();
     vehicle = Vehicle();
     vehicle.setPosition(track.getStartPosition());
-    carModel.setPosition(track.getStartPosition());
-    carModel.setRotation(track.getStartRotation(), Vector3(0, 1, 0));
     vehicle.setHeading(track.getStartRotation());
-
-    raceState = {};
-    raceState.totalLaps = 3;
+    car.setPosition(vehicle.getPosition());
+    car.setRotation(vehicle.getHeading(), Vector3(0, 1, 0));
+    countdown = 3; skid = collisionCooldown = finishHold = 0; collisions = 0;
+    setControls(0, 0, 0);
+    state = GameState::COUNTDOWN;
+    updateCamera(0, true);
 }
 
+void Engine::update(float dt) {
+    if (!initialized || !std::isfinite(dt) || dt <= 0) return;
+    dt = std::min(dt, 0.05f);
+    gameTime += dt;
+    if (state == GameState::MENU) {
+        float angle = gameTime * 0.12f;
+        renderer.getCamera().lookAt(Vector3(cosf(angle) * 115, 32, sinf(angle) * 100),
+                                     Vector3(-8, 5, 0), Vector3(0, 1, 0));
+    } else if (state == GameState::COUNTDOWN) {
+        countdown = std::max(0.f, countdown - dt);
+        if (countdown == 0) state = GameState::RACING;
+        updateCamera(dt);
+    } else if (state == GameState::RACING) {
+        updateRacing(dt);
+    } else if (state == GameState::FINISHED) {
+        finishHold += dt;
+        smoke.update(vehicle.getPosition(), vehicle.getHeading(), 0, dt);
+        updateCamera(dt);
+    }
+}
+
+void Engine::updateRacing(float dt) {
+    Vector3 previous = vehicle.getPosition();
+    vehicle.applySteering(steering * 0.65f, dt);
+    vehicle.applyAcceleration(throttle * (1 - brake));
+    vehicle.applyBrake(brake);
+    vehicle.update(dt);
+    collisionCooldown = std::max(0.f, collisionCooldown - dt);
+    if (!track.isOnTrack(vehicle.getPosition()) || track.checkCollision(vehicle.getPosition(), 0.9f)) {
+        vehicle.hitBarrier(previous, track.headingAt(previous));
+        if (collisionCooldown == 0) { ++collisions; collisionCooldown = 0.6f; }
+    }
+    challenge.tick(dt);
+    int gate = track.crossedCheckpoint(previous, vehicle.getPosition());
+    if (challenge.cross(gate) && challenge.finished()) {
+        state = GameState::FINISHED;
+        setControls(0, 0, 0);
+    }
+    skid = vehicle.getSpeed() > 9 ? std::max(brake, std::abs(steering) * vehicle.getSpeed() / 40.f) : 0;
+    skid = std::clamp(skid, 0.f, 1.f);
+    smoke.update(vehicle.getPosition(), vehicle.getHeading(), skid > 0.4f ? skid : 0, dt);
+    car.setPosition(vehicle.getPosition());
+    car.setRotation(vehicle.getHeading(), Vector3(0, 1, 0));
+    updateCamera(dt);
+}
+
+void Engine::updateCamera(float dt, bool snap) {
+    float speed = vehicle.getSpeed();
+    Vector3 forward(sinf(vehicle.getHeading()), 0, cosf(vehicle.getHeading()));
+    // A modest speed pullback and forward look keep corners visible, without shake.
+    renderer.getCamera().followTarget(vehicle.getPosition() + forward * (speed * 0.07f), forward,
+        10.5f + speed * 0.14f, 5.f + speed * 0.025f, snap ? 1.f : 1.f - expf(-7.f * dt));
+}
+
+void Engine::drawSmoke() {
+    const auto& shader = renderer.getShader();
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glDepthMask(GL_FALSE);
+    glDisable(GL_CULL_FACE);
+    shader.setInt("uSoftParticle", 1);
+    shader.setVec3("uObjectColor", 0.45f, 0.35f, 0.48f);
+    Vector3 eye = renderer.getCamera().getPosition();
+    // At most 32 short-lived billboards; reuse one mesh for every puff.
+    for (const auto& p : smoke.puffs) {
+        if (p.age >= 1.1f) continue;
+        float yaw = atan2f(eye.x - p.position.x, eye.z - p.position.z);
+        Matrix4 model = Matrix4::translate(p.position) * Matrix4::rotate(yaw, 0, 1, 0)
+                      * Matrix4::scale(p.size, p.size, p.size);
+        shader.setMat4("uModelMatrix", model.data());
+        shader.setFloat("uOpacity", 0.24f * (1.f - p.age / 1.1f));
+        smokeQuad->draw();
+    }
+    shader.setFloat("uOpacity", 1);
+    shader.setInt("uSoftParticle", 0);
+    glDepthMask(GL_TRUE);
+    glEnable(GL_CULL_FACE);
+    glDisable(GL_BLEND);
+}
+
+void Engine::render() {
+    if (!initialized) return;
+    renderer.beginFrame();
+    track.draw(renderer.getShader());
+    if (state != GameState::MENU) {
+        car.draw(renderer.getShader(), brake > 0.1f);
+        drawSmoke();
+    }
+    renderer.endFrame();
+}
+
+void Engine::writeTelemetry(float* v) const {
+    v[0] = vehicle.getSpeed(); v[1] = challenge.completed / 4; v[2] = challenge.raceTime;
+    v[3] = static_cast<int>(state); v[4] = ceilf(countdown); v[5] = challenge.completed;
+    v[6] = challenge.sectorTime(); v[7] = challenge.target(3); v[8] = challenge.target(2); v[9] = challenge.target(1);
+    v[10] = challenge.lastSectorTime; v[11] = challenge.lastMedal; v[12] = challenge.dominionRank();
+    v[13] = challenge.points(); v[14] = challenge.claimed(); v[15] = challenge.bestLap;
+    v[16] = skid; v[17] = collisions; v[18] = challenge.sectorTime();
+    v[19] = steering; v[20] = throttle; v[21] = brake;
+    for (int i = 0; i < CircuitChallenge::SECTORS; ++i) v[22 + i] = challenge.medals[i];
+}
+
+void Engine::shutdown() {
+    delete smokeQuad; smokeQuad = nullptr;
+    if (initialized) {
+        track.destroy(); car.destroy(); renderer.shutdown(); initialized = false;
+    }
+}
 } // namespace RacingEngine
