@@ -18,7 +18,7 @@ ModelData AssetLoader::loadModel(const std::string& path) {
 
     if (!assetManager) return result;
 
-    AAsset* asset = AAsset_open(assetManager, path.c_str(), AASSET_MODE_BUFFER);
+    AAsset* asset = AAssetManager_open(assetManager, path.c_str(), AASSET_MODE_BUFFER);
     if (!asset) return result;
 
     result.size = AAsset_getLength(asset);
@@ -34,7 +34,7 @@ std::vector<unsigned char> AssetLoader::loadTexture(const std::string& path) {
 
     if (!assetManager) return data;
 
-    AAsset* asset = AAsset_open(assetManager, path.c_str(), AASSET_MODE_BUFFER);
+    AAsset* asset = AAssetManager_open(assetManager, path.c_str(), AASSET_MODE_BUFFER);
     if (!asset) return data;
 
     size_t size = AAsset_getLength(asset);
@@ -50,7 +50,7 @@ std::string AssetLoader::loadConfig() {
 
     if (!assetManager) return config;
 
-    AAsset* asset = AAsset_open(assetManager, "asset_config.json", AASSET_MODE_BUFFER);
+    AAsset* asset = AAssetManager_open(assetManager, "asset_config.json", AASSET_MODE_BUFFER);
     if (!asset) return config;
 
     size_t size = AAsset_getLength(asset);
