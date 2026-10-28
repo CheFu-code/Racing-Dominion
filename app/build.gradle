@@ -3,11 +3,11 @@ plugins {
 }
 
 android {
-    namespace 'com.racing.engine'
+    namespace 'co.za.chefu.racingdominion'
     compileSdk 34
 
     defaultConfig {
-        applicationId "com.racing.engine"
+        applicationId "co.za.chefu.racingdominion"
         minSdk 21
         targetSdk 34
         versionCode 1

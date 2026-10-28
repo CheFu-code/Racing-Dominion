@@ -26,4 +26,4 @@
 }
 
 # Keep racing engine classes
--keep class com.racing.engine.** { *; }
+-keep class co.za.chefu.racingdominion.** { *; }

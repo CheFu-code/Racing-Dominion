@@ -1,4 +1,4 @@
-package com.racing.engine;
+package co.za.chefu.racingdominion;
 
 import android.app.Activity;
 import android.opengl.GLSurfaceView;
