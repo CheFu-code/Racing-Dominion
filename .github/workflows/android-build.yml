@@ -35,21 +35,6 @@ jobs:
     - name: Make gradlew executable
       run: chmod +x gradlew
     
-    - name: Display build environment
-      run: |
-        echo "=== Build Environment ==="
-        echo "Java version:"
-        java -version
-        echo ""
-        echo "Gradle version:"
-        ./gradlew --version
-        echo ""
-        echo "NDK location: ${ANDROID_NDK_HOME}"
-        ls -la ${ANDROID_NDK_HOME} 2>/dev/null || echo "NDK not found at expected location"
-        echo ""
-        echo "CMake location:"
-        find $ANDROID_SDK_ROOT -name cmake -type f 2>/dev/null | head -5
-    
     - name: Prepare release signing key
       if: github.event_name != 'pull_request'
       env:
