@@ -1,25 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="108dp"
-    android:height="108dp"
-    android:viewportWidth="108"
-    android:viewportHeight="108">
-    
-    <!-- Racing car icon -->
-    <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M20,50 L30,40 L50,40 L60,30 L80,30 L90,40 L90,60 L80,70 L30,70 L20,60 Z"/>
-    
-    <!-- Wheels -->
-    <path
-        android:fillColor="#333333"
-        android:pathData="M35,65 a8,8 0 1,0 16,0 a8,8 0 1,0 -16,0"/>
-    <path
-        android:fillColor="#333333"
-        android:pathData="M65,65 a8,8 0 1,0 16,0 a8,8 0 1,0 -16,0"/>
-    
-    <!-- Window -->
-    <path
-        android:fillColor="#88CCFF"
-        android:pathData="M50,35 L60,35 L65,45 L45,45 Z"/>
+    android:width="108dp" android:height="108dp"
+    android:viewportWidth="108" android:viewportHeight="108">
+    <!-- Dominion crown above a converging racing straight. -->
+    <path android:fillColor="#D4FF55"
+        android:pathData="M32,39 L43,48 L54,32 L65,48 L76,39 L70,61 L38,61 Z"/>
+    <path android:fillColor="#F3F6FA"
+        android:pathData="M43,66 L50,66 L46,77 L36,77 Z M58,66 L65,66 L72,77 L62,77 Z"/>
+    <path android:fillColor="#D4FF55"
+        android:pathData="M53,66 L55,66 L56,71 L52,71 Z M52,74 L56,74 L57,78 L51,78 Z"/>
 </vector>

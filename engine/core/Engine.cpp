@@ -1,7 +1,5 @@
 #include "Engine.h"
 #include "AssetLoader.h"
-#include "glTFLoader.h"
-#include "TextureLoader.h"
 #include <android/log.h>
 #include <cmath>
 
@@ -14,7 +12,6 @@ namespace RacingEngine {
 Engine::Engine()
     : screenWidth(0), screenHeight(0), assetManager(nullptr),
       isInitialized(false), gameTime(0.0f),
-      carMesh(nullptr),
       gameState(GameState::MENU) {
 
     inputState = {};
@@ -40,34 +37,17 @@ bool Engine::initialize(AAssetManager* assetMgr) {
     // Generate default track
     track.generateDefaultTrack();
 
-    // Create a simple car model using cube mesh
-    carMesh = renderer.createCubeMesh(2.0f);
-    carModel.addMesh(carMesh);
-    carModel.setScale(1.0f, 0.5f, 2.0f);
-
-    // Try to load a glTF car model
-    ModelData carData = AssetLoader::loadModel("models/cars/car1.glb");
-    if (carData.size > 0) {
-        glTFModel gltfModel = glTFLoader::parse(carData.data.data(), carData.size);
-        if (gltfModel.valid) {
-            LOGI("Loaded car model with %zu primitives", gltfModel.primitives.size());
-            // Replace the simple car mesh with loaded model
-            for (const auto& prim : gltfModel.primitives) {
-                Mesh* loadedMesh = new Mesh();
-                loadedMesh->upload(prim.vertices, prim.indices);
-                carModel.addMesh(loadedMesh);
-            }
-        }
-    }
+    carModel.initialize();
 
     // Set initial car position at track start
     vehicle.setPosition(track.getStartPosition());
     carModel.setPosition(track.getStartPosition());
     float startRot = track.getStartRotation();
+    vehicle.setHeading(startRot);
     carModel.setRotation(startRot, Vector3(0, 1, 0));
 
     // Set up sky/clear color
-    renderer.setClearColor(0.4f, 0.6f, 0.9f, 1.0f);
+    renderer.setClearColor(0.055f, 0.085f, 0.14f, 1.0f);
 
     gameState = GameState::MENU;
     isInitialized = true;
@@ -164,6 +144,7 @@ void Engine::handleInput(float deltaTime) {
         inputState.accelerationInput = 0;
         inputState.brakeInput = 0;
         inputState.steeringInput *= 0.9f; // Decay steering
+        vehicle.applySteering(inputState.steeringInput * 0.8f, deltaTime);
         return;
     }
 
@@ -189,7 +170,7 @@ void Engine::handleInput(float deltaTime) {
         }
     }
 
-    vehicle.applySteering(inputState.steeringInput * 0.8f);
+    vehicle.applySteering(inputState.steeringInput * 0.8f, deltaTime);
 
     if (inputState.accelerationInput > 0.01f) {
         vehicle.applyAcceleration(inputState.accelerationInput);
@@ -208,7 +189,7 @@ void Engine::updateCamera() {
     if (speed > 0.5f) {
         forward = carVel.normalized();
     } else {
-        forward = Vector3(0, 0, 1);
+        forward = Vector3(sinf(vehicle.getHeading()), 0, cosf(vehicle.getHeading()));
     }
 
     renderer.getCamera().followTarget(carPos, forward, 12.0f, 6.0f, 0.05f);
@@ -218,8 +199,8 @@ void Engine::checkCheckpoints() {
     Vector3 pos = vehicle.getPosition();
     int cpIdx = track.getCheckpointIndex(pos);
 
-    if (cpIdx >= 0 && cpIdx != raceState.lastCheckpoint) {
-        if (cpIdx == 0 && raceState.lastCheckpoint > 0) {
+    if (cpIdx >= 0 && cpIdx == (raceState.lastCheckpoint + 1) % 4) {
+        if (cpIdx == 0) {
             // Completed a lap
             raceState.currentLap++;
             if (raceState.currentLapTime < raceState.bestLapTime || raceState.bestLapTime == 0) {
@@ -247,7 +228,7 @@ void Engine::render() {
 
     // Draw car
     if (gameState != GameState::MENU) {
-        renderer.renderModel(carModel, Vector3(0.8f, 0.1f, 0.1f));
+        carModel.draw(renderer.getShader());
     }
 
     renderer.endFrame();
@@ -311,6 +292,8 @@ void Engine::resetRace() {
     vehicle = Vehicle();
     vehicle.setPosition(track.getStartPosition());
     carModel.setPosition(track.getStartPosition());
+    carModel.setRotation(track.getStartRotation(), Vector3(0, 1, 0));
+    vehicle.setHeading(track.getStartRotation());
 
     raceState = {};
     raceState.totalLaps = 3;

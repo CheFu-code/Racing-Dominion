@@ -50,22 +50,22 @@ void Shader::unuse() {
     glUseProgram(0);
 }
 
-void Shader::setInt(const char* name, int value) {
+void Shader::setInt(const char* name, int value) const {
     GLint location = glGetUniformLocation(programId, name);
     if (location >= 0) glUniform1i(location, value);
 }
 
-void Shader::setFloat(const char* name, float value) {
+void Shader::setFloat(const char* name, float value) const {
     GLint location = glGetUniformLocation(programId, name);
     if (location >= 0) glUniform1f(location, value);
 }
 
-void Shader::setVec3(const char* name, float x, float y, float z) {
+void Shader::setVec3(const char* name, float x, float y, float z) const {
     GLint location = glGetUniformLocation(programId, name);
     if (location >= 0) glUniform3f(location, x, y, z);
 }
 
-void Shader::setMat4(const char* name, const float* matrix) {
+void Shader::setMat4(const char* name, const float* matrix) const {
     GLint location = glGetUniformLocation(programId, name);
     if (location >= 0) glUniformMatrix4fv(location, 1, GL_FALSE, matrix);
 }

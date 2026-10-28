@@ -1,94 +1,48 @@
-# Getting Started
+# Getting Started with Racing Dominion
 
-## Prerequisites
+## Edit, build on GitHub, install on your phone
 
-- Android Studio Hedgehog or later
-- Android NDK r25 or later
-- CMake 3.18+
-- Git
+Before the first release build, configure the four repository signing secrets using the [release signing guide](RELEASE_SIGNING.md). Push and manual runs produce signed release APKs; pull requests produce unsigned validation APKs.
 
-## Setup
+Android Studio is optional. Edit in VS Code, push to `main` or `develop`, and use **Actions > Racing Dominion Release APK** in [the repository](https://github.com/CheFu-code/Racing-Dominion/actions).
 
-1. **Clone the repository**
-```bash
-git clone https://github.com/subhobhai943/android-3d-racing-game.git
-cd android-3d-racing-game
+Download the completed run's `racing-dominion-release-apk` artifact, extract it, and install `app-release.apk` on your phone. Allow installation from that source if prompted. A code change requires a new build and installation.
+
+## Local command-line builds
+
+Install JDK 17, Android SDK platform/build-tools 34, NDK 26.1.10909125, CMake 3.22.1, and Android platform-tools. Configure `ANDROID_HOME` or `local.properties` with your SDK location. CI downloads the Gradle 8.2 wrapper JAR; local builds also require `gradle/wrapper/gradle-wrapper.jar`.
+
+From the repository root in PowerShell:
+
+```powershell
+.\gradlew.bat assembleDebug
 ```
 
-2. **Open in Android Studio**
-- File → Open → Select project folder
-- Wait for Gradle sync
-- Download NDK if prompted
+With USB debugging enabled and your phone connected:
 
-3. **Build the project**
-```bash
-./gradlew build
+```powershell
+adb devices
+.\gradlew.bat installDebug
 ```
 
-4. **Run on device/emulator**
-- Connect Android device or start emulator
-- Click Run button or use: `./gradlew installDebug`
+Launch Racing Dominion on your phone after installation. The application ID is `co.za.chefu.racingdominion`.
 
-## Development Workflow
+## Where to edit
 
-### Engine Code (C++)
+The [README](../README.md#customize) maps the visual and gameplay systems to their source files. Active shaders are embedded in `engine/graphics/Renderer.cpp`; files under `shaders/` are not the active rendering path.
 
-Modify files in `engine/` directory:
+The default game uses the authored Crownline Circuit and procedural RD-01 car. Legacy sample model assets are not used for the player's car.
+
+## Device checks after visual changes
+
+- Start a race and confirm the menu disappears.
+- Check the timer, speed, lap display, and control zones on your screen size.
+- Drive the four course gates in order; the start line should count a lap only after the other gates.
+- Complete three laps and tap the results screen to restart.
+- Background and reopen the app, checking rendering and touch input.
+
+## Logs
+
+```powershell
+adb logcat -s RacingEngine Track Renderer
 ```
-engine/
-├── core/       # Engine core systems
-├── graphics/   # Rendering code
-├── physics/    # Physics simulation
-└── math/       # Math utilities
-```
-
-After changes, rebuild native code:
-```bash
-./gradlew :app:externalNativeBuildDebug
-```
-
-### Shaders
-
-Edit GLSL shaders in `shaders/` directory. Changes take effect on next build.
-
-### Android Integration
-
-Java/Kotlin code in `app/src/main/java/`. Handles:
-- OpenGL surface creation
-- Touch input
-- Audio playback
-- UI overlays
-
-## Testing
-
-```bash
-# Run unit tests
-./gradlew test
-
-# Run on connected device
-./gradlew connectedAndroidTest
-```
-
-## Debugging
-
-### Native Code
-1. Set breakpoints in C++ files
-2. Run → Debug 'app'
-3. Android Studio will attach LLDB debugger
-
-### Logs
-```bash
-# View engine logs
-adb logcat -s RacingEngine
-
-# View all logs
-adb logcat
-```
-
-## Next Steps
-
-1. Implement mesh loading system
-2. Add texture support
-3. Create simple track geometry
-4. Implement touch controls
-5. Add camera following vehicle

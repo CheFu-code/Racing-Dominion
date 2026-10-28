@@ -46,10 +46,9 @@ private:
     Mesh* trackMesh;
     Mesh* barrierMesh;
     Mesh* checkpointMesh;
+    Mesh* groundMesh;
+    Mesh* skylineMesh;
     int totalLaps;
-
-    std::vector<BoundingBox> barrierBoxes;
-    std::vector<BoundingBox> checkpointBoxes;
 
     void createTrackGeometry();
     void createBarriers();

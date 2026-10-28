@@ -9,6 +9,7 @@
 #include "Track.h"
 #include "Vehicle.h"
 #include "Mesh.h"
+#include "DominionCar.h"
 
 namespace RacingEngine {
 
@@ -86,8 +87,7 @@ private:
     GameState gameState;
 
     // Car model for rendering
-    Model carModel;
-    Mesh* carMesh;
+    DominionCar carModel;
 
     void updateMenu(float deltaTime);
     void updateRacing(float deltaTime);

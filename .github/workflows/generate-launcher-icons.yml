@@ -1,4 +1,4 @@
-name: Generate Launcher Icons
+name: Generate Racing Dominion Icons
 
 on:
   workflow_dispatch:
@@ -8,106 +8,28 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-    
     steps:
-    - uses: actions/checkout@v4
-    
-    - name: Setup Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.11'
-    
-    - name: Install Pillow for image generation
-      run: pip install Pillow
-    
-    - name: Generate PNG launcher icons
-      run: |
-        python3 << 'ICON_SCRIPT'
-        from PIL import Image, ImageDraw
-        import os
-        
-        def create_racing_icon(size):
-            # Create image with purple background
-            img = Image.new('RGBA', (size, size), (98, 0, 238, 255))
-            draw = ImageDraw.Draw(img)
-            
-            # Scale factor
-            s = size / 108.0
-            
-            # Draw simple racing car
-            # Car body
-            car_points = [
-                (20*s, 50*s), (30*s, 40*s), (50*s, 40*s),
-                (60*s, 30*s), (80*s, 30*s), (90*s, 40*s),
-                (90*s, 60*s), (80*s, 70*s), (30*s, 70*s), (20*s, 60*s)
-            ]
-            draw.polygon(car_points, fill=(255, 255, 255, 255))
-            
-            # Wheels
-            draw.ellipse([35*s-8*s, 65*s-8*s, 35*s+8*s, 65*s+8*s], fill=(51, 51, 51, 255))
-            draw.ellipse([73*s-8*s, 65*s-8*s, 73*s+8*s, 65*s+8*s], fill=(51, 51, 51, 255))
-            
-            # Window
-            window_points = [(50*s, 35*s), (60*s, 35*s), (65*s, 45*s), (45*s, 45*s)]
-            draw.polygon(window_points, fill=(136, 204, 255, 255))
-            
-            return img
-        
-        # Create directories
-        densities = {
-            'mdpi': 48,
-            'hdpi': 72,
-            'xhdpi': 96,
-            'xxhdpi': 144,
-            'xxxhdpi': 192
-        }
-        
-        for density, size in densities.items():
-            dir_path = f'app/src/main/res/mipmap-{density}'
-            os.makedirs(dir_path, exist_ok=True)
-            
-            # Generate icon
-            icon = create_racing_icon(size)
-            icon.save(f'{dir_path}/ic_launcher.png', 'PNG')
-            
-            # Round icon (same for now)
-            icon.save(f'{dir_path}/ic_launcher_round.png', 'PNG')
-            
-            print(f'✓ Generated {density} icons ({size}x{size})')
-        
-        print('\n✅ All launcher icons generated successfully!')
-        ICON_SCRIPT
-    
-    - name: Verify generated icons
-      run: |
-        echo "Generated icons:"
-        find app/src/main/res/mipmap-* -name "*.png" -exec ls -lh {} \;
-    
-    - name: Commit launcher icons
-      run: |
-        git config user.name "Icon Generator Bot"
-        git config user.email "icons@github-actions.bot"
-        git add app/src/main/res/mipmap-*/
-        
-        if git diff --staged --quiet; then
-          echo "No new icons to commit"
-        else
-          git commit -m "🎨 Generate launcher icons for all densities
-          
-          - Created PNG icons for mdpi, hdpi, xhdpi, xxhdpi, xxxhdpi
-          - Racing car themed icon design
-          - Both regular and round variants"
-          git push
-        fi
-    
-    - name: Summary
-      run: |
-        echo "# 🎨 Launcher Icons Generated" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "## Generated Icons" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        find app/src/main/res/mipmap-* -name "*.png" | while read icon; do
-          SIZE=$(identify -format "%wx%h" "$icon" 2>/dev/null || echo "unknown")
-          BYTES=$(ls -lh "$icon" | awk '{print $5}')
-          echo "- \`$(basename $(dirname $icon))/$(basename $icon)\` - ${SIZE} (${BYTES})" >> $GITHUB_STEP_SUMMARY
-        done
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install icon renderer
+        run: pip install Pillow==12.3.0
+      - name: Generate Dominion crown icons
+        run: python tools/generate_launcher_icons.py
+      - name: Commit launcher icons
+        run: |
+          git config user.name "Icon Generator Bot"
+          git config user.email "icons@github-actions.bot"
+          git add app/src/main/res/mipmap-*/
+          if git diff --staged --quiet; then
+            echo "Icons already match the Racing Dominion design."
+          else
+            git commit -m "Update Racing Dominion launcher icons"
+            git push
+          fi
+      - name: Upload icon preview
+        uses: actions/upload-artifact@v4
+        with:
+          name: racing-dominion-launcher-icons
+          path: app/src/main/res/mipmap-*/*.png

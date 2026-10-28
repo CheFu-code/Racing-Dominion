@@ -32,7 +32,7 @@ Invalid files are automatically deleted before commit.
 
 ## Run Fixed Workflow
 
-1. Go to [Actions tab](https://github.com/subhobhai943/android-3d-racing-game/actions)
+1. Go to [Actions tab](https://github.com/CheFu-code/Racing-Dominion/actions)
 2. Select **"Download Real 3D Assets (Fixed)"**
 3. Click **"Run workflow"**
 4. Wait 2-3 minutes
@@ -59,8 +59,8 @@ The workflow downloads **placeholder models** from Khronos glTF samples:
 2. **Add to repository**:
    ```bash
    # Clone repo
-   git clone https://github.com/subhobhai943/android-3d-racing-game.git
-   cd android-3d-racing-game
+   git clone https://github.com/CheFu-code/Racing-Dominion.git
+   cd Racing-Dominion
    
    # Add model
    cp ~/Downloads/racing_car.glb app/src/main/assets/models/cars/

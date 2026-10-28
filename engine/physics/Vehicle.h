@@ -12,13 +12,15 @@ public:
     void update(float deltaTime);
     void applyAcceleration(float amount);
     void applyBrake(float amount);
-    void applySteering(float angle);
+    void applySteering(float angle, float deltaTime);
 
     void setPosition(const Vector3& pos) { position = pos; }
     Vector3 getPosition() const { return position; }
     Vector3 getVelocity() const { return velocity; }
     float getSpeed() const;
     float getSteeringAngle() const { return steeringAngle; }
+    void setHeading(float radians) { heading = radians; }
+    float getHeading() const { return heading; }
 
 private:
     Vector3 position;
@@ -26,6 +28,8 @@ private:
     Vector3 acceleration;
 
     float steeringAngle;
+    float heading;
+    float brakeInput;
     float speed;
     float maxSpeed;
     float accelerationForce;

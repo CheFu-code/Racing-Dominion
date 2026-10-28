@@ -6,9 +6,9 @@ namespace RacingEngine {
 
 Vehicle::Vehicle()
     : position(0, 0.5f, 0), velocity(0, 0, 0), acceleration(0, 0, 0),
-      steeringAngle(0.0f), speed(0.0f), maxSpeed(80.0f),
-      accelerationForce(40.0f), brakeForce(60.0f),
-      mass(1200.0f), drag(0.98f), friction(2.0f), turnSpeed(2.5f) {
+      steeringAngle(0.0f), heading(0.0f), brakeInput(0.0f), speed(0.0f), maxSpeed(80.0f),
+      accelerationForce(16000.0f), brakeForce(28000.0f),
+      mass(1200.0f), drag(0.995f), friction(0.4f), turnSpeed(2.5f) {
 }
 
 void Vehicle::update(float deltaTime) {
@@ -19,11 +19,6 @@ void Vehicle::applyAcceleration(float amount) {
     amount = fmaxf(0.0f, fminf(1.0f, amount));
 
     // Calculate forward direction based on current heading
-    float heading = atan2f(velocity.x, velocity.z);
-    if (speed < 0.5f) {
-        heading = steeringAngle;
-    }
-
     float forwardX = sinf(heading);
     float forwardZ = cosf(heading);
 
@@ -33,41 +28,26 @@ void Vehicle::applyAcceleration(float amount) {
 }
 
 void Vehicle::applyBrake(float amount) {
-    amount = fmaxf(0.0f, fminf(1.0f, amount));
-
-    if (speed > 0.1f) {
-        float brakeX = -(velocity.x / speed) * brakeForce * amount / mass;
-        float brakeZ = -(velocity.z / speed) * brakeForce * amount / mass;
-        acceleration.x += brakeX;
-        acceleration.z += brakeZ;
-    } else if (speed > 0) {
-        // Full stop
-        velocity.x = 0;
-        velocity.z = 0;
-    }
+    brakeInput = fmaxf(0.0f, fminf(1.0f, amount));
 }
 
-void Vehicle::applySteering(float angle) {
+void Vehicle::applySteering(float angle, float deltaTime) {
     steeringAngle = angle;
 
     // Apply steering force proportional to speed
     if (speed > 1.0f) {
-        float steerForce = angle * turnSpeed * fminf(speed / maxSpeed, 1.0f);
-
-        // Calculate perpendicular direction
-        float heading = atan2f(velocity.x, velocity.z);
-        float perpX = cosf(heading);
-        float perpZ = -sinf(heading);
+        float steerForce = angle * turnSpeed * fminf(speed / 20.0f, 1.0f);
 
         // Don't apply lateral acceleration directly to velocity
         // Instead, rotate the velocity vector
-        float rotAngle = steerForce * 0.016f; // Approximate for 60fps
+        float rotAngle = steerForce * deltaTime;
         float cosA = cosf(rotAngle);
         float sinA = sinf(rotAngle);
         float newVx = velocity.x * cosA - velocity.z * sinA;
         float newVz = velocity.x * sinA + velocity.z * cosA;
         velocity.x = newVx;
         velocity.z = newVz;
+        heading = atan2f(velocity.x, velocity.z);
     }
 }
 
@@ -82,8 +62,19 @@ void Vehicle::updatePhysics(float deltaTime) {
     velocity.z += acceleration.z * deltaTime;
 
     // Apply drag (air resistance)
-    velocity.x *= drag;
-    velocity.z *= drag;
+    float frameDrag = powf(drag, deltaTime * 60.f);
+    velocity.x *= frameDrag;
+    velocity.z *= frameDrag;
+
+    // Clamp the braking impulse to the remaining speed so braking cannot reverse the car.
+    float beforeBrake = getSpeed();
+    if (beforeBrake > 0 && brakeInput > 0) {
+        float reduction = fminf(beforeBrake, brakeForce / mass * brakeInput * deltaTime);
+        float factor = (beforeBrake - reduction) / beforeBrake;
+        velocity.x *= factor;
+        velocity.z *= factor;
+    }
+    brakeInput = 0;
 
     // Apply ground friction when not accelerating
     speed = getSpeed();

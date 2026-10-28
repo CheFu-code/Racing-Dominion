@@ -21,6 +21,9 @@ build/
 
 # Local configuration file
 local.properties
+*.jks
+*.keystore
+*.keystore.base64
 
 # Android Studio
 *.iml

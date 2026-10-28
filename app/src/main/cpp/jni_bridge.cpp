@@ -9,7 +9,7 @@ static Engine* g_engine = nullptr;
 extern "C" {
 
 JNIEXPORT void JNICALL
-Java_com_racing_engine_RacingRenderer_nativeInit(
+Java_co_za_chefu_racingdominion_RacingRenderer_nativeInit(
     JNIEnv* env, jobject /* this */, jobject assetManager) {
 
     if (g_engine == nullptr) {
@@ -21,7 +21,7 @@ Java_com_racing_engine_RacingRenderer_nativeInit(
 }
 
 JNIEXPORT void JNICALL
-Java_com_racing_engine_RacingRenderer_nativeResize(
+Java_co_za_chefu_racingdominion_RacingRenderer_nativeResize(
     JNIEnv* env, jobject /* this */, jint width, jint height) {
 
     if (g_engine != nullptr) {
@@ -30,7 +30,7 @@ Java_com_racing_engine_RacingRenderer_nativeResize(
 }
 
 JNIEXPORT void JNICALL
-Java_com_racing_engine_RacingRenderer_nativeUpdate(
+Java_co_za_chefu_racingdominion_RacingRenderer_nativeUpdate(
     JNIEnv* env, jobject /* this */, jfloat deltaTime) {
 
     if (g_engine != nullptr) {
@@ -39,7 +39,7 @@ Java_com_racing_engine_RacingRenderer_nativeUpdate(
 }
 
 JNIEXPORT void JNICALL
-Java_com_racing_engine_RacingRenderer_nativeRender(
+Java_co_za_chefu_racingdominion_RacingRenderer_nativeRender(
     JNIEnv* env, jobject /* this */) {
 
     if (g_engine != nullptr) {
@@ -48,7 +48,7 @@ Java_com_racing_engine_RacingRenderer_nativeRender(
 }
 
 JNIEXPORT void JNICALL
-Java_com_racing_engine_RacingRenderer_nativeOnTouchDown(
+Java_co_za_chefu_racingdominion_RacingRenderer_nativeOnTouchDown(
     JNIEnv* env, jobject /* this */, jfloat x, jfloat y) {
 
     if (g_engine != nullptr) {
@@ -57,7 +57,7 @@ Java_com_racing_engine_RacingRenderer_nativeOnTouchDown(
 }
 
 JNIEXPORT void JNICALL
-Java_com_racing_engine_RacingRenderer_nativeOnTouchMove(
+Java_co_za_chefu_racingdominion_RacingRenderer_nativeOnTouchMove(
     JNIEnv* env, jobject /* this */, jfloat x, jfloat y) {
 
     if (g_engine != nullptr) {
@@ -66,7 +66,7 @@ Java_com_racing_engine_RacingRenderer_nativeOnTouchMove(
 }
 
 JNIEXPORT void JNICALL
-Java_com_racing_engine_RacingRenderer_nativeOnTouchUp(
+Java_co_za_chefu_racingdominion_RacingRenderer_nativeOnTouchUp(
     JNIEnv* env, jobject /* this */, jfloat x, jfloat y) {
 
     if (g_engine != nullptr) {
@@ -75,7 +75,7 @@ Java_com_racing_engine_RacingRenderer_nativeOnTouchUp(
 }
 
 JNIEXPORT jfloat JNICALL
-Java_com_racing_engine_RacingRenderer_nativeGetSpeed(
+Java_co_za_chefu_racingdominion_RacingRenderer_nativeGetSpeed(
     JNIEnv* env, jobject /* this */) {
 
     if (g_engine != nullptr) {
@@ -85,7 +85,7 @@ Java_com_racing_engine_RacingRenderer_nativeGetSpeed(
 }
 
 JNIEXPORT jint JNICALL
-Java_com_racing_engine_RacingRenderer_nativeGetLap(
+Java_co_za_chefu_racingdominion_RacingRenderer_nativeGetLap(
     JNIEnv* env, jobject /* this */) {
 
     if (g_engine != nullptr) {
@@ -95,7 +95,7 @@ Java_com_racing_engine_RacingRenderer_nativeGetLap(
 }
 
 JNIEXPORT jfloat JNICALL
-Java_com_racing_engine_RacingRenderer_nativeGetRaceTime(
+Java_co_za_chefu_racingdominion_RacingRenderer_nativeGetRaceTime(
     JNIEnv* env, jobject /* this */) {
 
     if (g_engine != nullptr) {
@@ -105,7 +105,7 @@ Java_com_racing_engine_RacingRenderer_nativeGetRaceTime(
 }
 
 JNIEXPORT jboolean JNICALL
-Java_com_racing_engine_RacingRenderer_nativeIsFinished(
+Java_co_za_chefu_racingdominion_RacingRenderer_nativeIsFinished(
     JNIEnv* env, jobject /* this */) {
 
     if (g_engine != nullptr) {
@@ -115,7 +115,7 @@ Java_com_racing_engine_RacingRenderer_nativeIsFinished(
 }
 
 JNIEXPORT jint JNICALL
-Java_com_racing_engine_RacingRenderer_nativeGetGameState(
+Java_co_za_chefu_racingdominion_RacingRenderer_nativeGetGameState(
     JNIEnv* env, jobject /* this */) {
 
     if (g_engine != nullptr) {

@@ -30,7 +30,7 @@ void AudioEngine::initialize(JavaVM* vm, jobject context) {
     }
 
     // Find AudioHelper class
-    jclass audioHelperClass = env->FindClass("com/racing/engine/AudioHelper");
+    jclass audioHelperClass = env->FindClass("co/za/chefu/racingdominion/AudioHelper");
     if (audioHelperClass == nullptr) {
         LOGE("Could not find AudioHelper class");
         if (needsDetach) javaVM->DetachCurrentThread();

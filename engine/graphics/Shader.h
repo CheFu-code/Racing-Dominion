@@ -18,10 +18,10 @@ public:
     void unuse();
     
     // Uniform setters
-    void setInt(const char* name, int value);
-    void setFloat(const char* name, float value);
-    void setVec3(const char* name, float x, float y, float z);
-    void setMat4(const char* name, const float* matrix);
+    void setInt(const char* name, int value) const;
+    void setFloat(const char* name, float value) const;
+    void setVec3(const char* name, float x, float y, float z) const;
+    void setMat4(const char* name, const float* matrix) const;
     
     GLuint getProgramId() const { return programId; }
 
